@@ -110,6 +110,9 @@ class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
     def save(self, **kwargs):
+        """
+        Triggers the password reset process.
+        """
         try:
             user = User.objects.get(email=self.validated_data['email'])
             password_reset_requested.send(sender=self.__class__, user=user)
@@ -125,11 +128,17 @@ class PasswordConfirmationSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(write_only=True, required=True)
 
     def validate(self, attrs):
+        """
+        Checks if the new password and confirm password fields match.
+        """
         if attrs['new_password'] != attrs['confirm_password']:
             raise serializers.ValidationError("Passwords don't match.")
         return attrs
 
     def create(self, validated_data):
+        """
+        Creates a new password for the user.
+        """
         user = self.context.get('user')
         if user is None:
             raise serializers.ValidationError("User context is required.")
