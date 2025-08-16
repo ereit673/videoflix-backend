@@ -141,6 +141,9 @@ class CookieTokenBlacklistView(TokenBlacklistView):
     """
 
     def post(self, request, *args, **kwargs):
+        """
+        Blacklists the refresh token for user logout and deletes all associated tokens from the cookies.
+        """
         refresh_token = request.COOKIES.get('refresh_token')
         if refresh_token:
             token = RefreshToken(refresh_token)
