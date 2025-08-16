@@ -1,0 +1,48 @@
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth import get_user_model
+from users_app.api.utils import generate_activation_link
+
+User = get_user_model()
+
+
+@receiver(post_save, sender=User)
+def send_activation_email(sender, instance, created, **kwargs):
+    """
+     Sends an activation email with a frontend activation link when a new inactive user is created.
+    """
+
+    if created and not instance.is_active:
+        activation_link = generate_activation_link(instance)
+
+        subject = "Confirm your email"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        to_email = instance.email
+        text_content = f"Please confirm your email using this link: {activation_link}"
+        html_content = f"""
+              <html>
+                <body>
+                  <p>Dear <span style="color:#2563eb">{instance.username}</span>,</p>
+                  <br>
+                  <p>Thank you for registering with <span style="color:#2563eb">Videoflix</span>. To complete your registration, please click the button below:</p>
+                  <a href="{activation_link}"
+                     style="display:inline-block;padding:12px 28px;font-size:16px;color:#fff;background-color:#2563eb;text-decoration:none;border-radius:6px;font-weight:bold;margin:24px 0;">
+                    Activate Account
+                  </a>
+                  <p>If you did not create this account, please disregard this email.</p>
+                  <br>
+                  <p>Best regards,</p>
+                  <p><span style="color:#2563eb">Your Videoflix Team</span></p>
+                </body>
+              </html>
+          """
+
+        msg = EmailMultiAlternatives(
+            subject, text_content, from_email, [to_email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send(fail_silently=False)
+
+        print(
+            f"Activation email sent to {to_email} with email {activation_link}")

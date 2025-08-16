@@ -1,10 +1,12 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
 
 from users_app.api import serializers
 
@@ -18,24 +20,40 @@ class RegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        """
-        Checks if the user is already registered and creates a new account if not.
-        """
+        """Register a new user as inactive."""
         serializer = serializers.RegistrationSerializer(data=request.data)
-
-        data = {}
-        if serializer.is_valid():
-            saved_account = serializer.save()
-            data = {
-                "user": {
-                    "id": saved_account.pk,
-                    "email": saved_account.email
-                },
-                "token": "activation_token"
-            }
-            return Response(data)
-        else:
+        if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = serializer.save()
+        return Response({
+            "user": {
+                "id": user.pk,
+                "email": user.email
+            }
+        }, status=status.HTTP_201_CREATED)
+
+
+class ActivateAccountView(APIView):
+    """
+    Handles account activation.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, uidb64, token):
+        """
+        Activates the user account if the token is valid.
+        """
+        try:
+            user_id = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=user_id)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+        if user is not None and default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({"detail": "Account successfully activated."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": "Invalid activation link."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CookieTokenObtainPairView(TokenObtainPairView):
@@ -46,18 +64,22 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        """ 
+        """
         Generates a new access and refresh token for the user.
         Sets the tokens as HttpOnly cookies in the response.
         """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         refresh = serializer.validated_data["refresh"]
         access = serializer.validated_data["access"]
-
-        response = Response({"message": "Login successful"})
-
+        user = User.objects.get(email=request.data['email'])
+        response = Response({
+            "detail": "Login successful",
+            "user": {
+                "id": user.pk,
+                "username": user.username
+            }
+        })
         response.set_cookie(
             key="access_token",
             value=str(access),
@@ -72,15 +94,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             secure=True,
             samesite='Lax'
         )
-        user = User.objects.get(email=request.data['email'])
-        response.data = {
-            "detail": "Login successful",
-            "user": {
-                "id": user.pk,
-                "username": user.username
-            }
-        }
-
         return response
 
 
@@ -95,28 +108,22 @@ class CookieTokenRefreshView(TokenRefreshView):
         Sets new access token as HttpOnly cookie in the response.
         """
         refresh_token = request.COOKIES.get('refresh_token')
-
         if refresh_token is None:
             return Response({
                 "detail": "Refresh token not found"
             }, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = self.get_serializer(data={"refresh": refresh_token})
-
         try:
             serializer.is_valid(raise_exception=True)
-        except:
+        except Exception:
             return Response({
                 "detail": "Refresh token invalid"
             }, status=status.HTTP_401_UNAUTHORIZED)
-
         access_token = serializer.validated_data.get('access')
-
         response = Response({
             "detail": "Token refreshed",
             "access": str(access_token)
         })
-
         response.set_cookie(
             key="access_token",
             value=str(access_token),
@@ -124,5 +131,4 @@ class CookieTokenRefreshView(TokenRefreshView):
             secure=True,
             samesite='Lax'
         )
-
         return response

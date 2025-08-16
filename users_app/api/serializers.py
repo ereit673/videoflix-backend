@@ -50,13 +50,17 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """
-        Creates a new user account.
+        Creates a new inactive user account.
         """
         validated_data.pop('confirmed_password')
-        user = User.objects.create(
-            email=validated_data['email'], username=validated_data['email'])
+        user = User(
+            email=validated_data['email'],
+            username=validated_data['email'],
+            is_active=False
+        )
         user.set_password(validated_data['password'])
         user.save()
+        print('USER CREATED NOW', user.is_active)
         return user
 
 
