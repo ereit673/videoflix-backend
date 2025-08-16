@@ -6,7 +6,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenBlacklistView
 
 from users_app.api import serializers
 
@@ -110,7 +111,7 @@ class CookieTokenRefreshView(TokenRefreshView):
         refresh_token = request.COOKIES.get('refresh_token')
         if refresh_token is None:
             return Response({
-                "detail": "Refresh token not found"
+                "detail": "Refresh token not found."
             }, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data={"refresh": refresh_token})
         try:
@@ -131,4 +132,26 @@ class CookieTokenRefreshView(TokenRefreshView):
             secure=True,
             samesite='Lax'
         )
+        return response
+
+
+class CookieTokenBlacklistView(TokenBlacklistView):
+    """
+    Handles token blacklisting for user logout and deletes all associated tokens from the cookies.
+    """
+
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.COOKIES.get('refresh_token')
+        if refresh_token:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        else:
+            return Response({
+                "detail": "Refresh token not found."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        response = Response({
+            "detail": "Logout successful! All tokens will be deleted. Refresh token is now invalid."
+        })
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
         return response

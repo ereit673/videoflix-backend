@@ -8,6 +8,7 @@ urlpatterns = [
          views.ActivateAccountView.as_view(), name='activate_account'),
     path('login/', views.CookieTokenObtainPairView.as_view(),
          name='token_obtain_pair'),
+    path('logout/', views.CookieTokenBlacklistView.as_view(), name='token_blacklist'),
     path('token/refresh/', views.CookieTokenRefreshView.as_view(),
          name='token_refresh')
 ]
