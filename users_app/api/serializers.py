@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from users_app.api.signals import password_reset_requested
+
 User = get_user_model()
 
 
@@ -99,3 +101,38 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         attrs['username'] = user.username
         return super().validate(attrs)
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for password reset.
+    """
+    email = serializers.EmailField(required=True)
+
+    def save(self, **kwargs):
+        try:
+            user = User.objects.get(email=self.validated_data['email'])
+            password_reset_requested.send(sender=self.__class__, user=user)
+        except User.DoesNotExist:
+            pass
+
+
+class PasswordConfirmationSerializer(serializers.Serializer):
+    """
+    Serializer for password confirmation
+    """
+    new_password = serializers.CharField(write_only=True, required=True)
+    confirm_password = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError("Passwords don't match.")
+        return attrs
+
+    def create(self, validated_data):
+        user = self.context.get('user')
+        if user is None:
+            raise serializers.ValidationError("User context is required.")
+        user.set_password(validated_data['new_password'])
+        user.save()
+        return user

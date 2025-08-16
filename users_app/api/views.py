@@ -155,3 +155,47 @@ class CookieTokenBlacklistView(TokenBlacklistView):
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
         return response
+
+
+class ResetPasswordView(APIView):
+    """
+    Handles password reset requests.
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        Initiates the password reset process.
+        """
+        serializer = serializers.ResetPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "An email has been sent to reset your password."})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordConfirmView(APIView):
+    """
+    Handles password reset confirmation.
+    """
+
+    def post(self, request, uidb64, token, *args, **kwargs):
+        """
+        Confirms the password reset and sets the new password.
+        """
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"detail": "Invalid user."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = serializers.PasswordConfirmationSerializer(
+            data=request.data, context={'user': user})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "detail": "Your Password has been successfully reset."
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
