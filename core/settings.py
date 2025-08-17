@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'django_rq',
-    'users_app'
+    'users_app',
+    'videos_app'
 ]
 
 MIDDLEWARE = [
