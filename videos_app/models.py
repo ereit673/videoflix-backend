@@ -1,15 +1,9 @@
-import re
-
 from django.db import models
 
 
-def clean_filename(title):
-    return re.sub(r'[^a-zA-Z0-9_]+', '_', title)
-
-
 def video_file_path(instance, filename):
-    title = clean_filename(instance.title)[:50]
-    return f'videos/{title}/{filename}'
+    # Save every video to media/videos/<id>/<original_filename>
+    return f'videos/{instance.id}/{filename}'
 
 
 class Video(models.Model):
