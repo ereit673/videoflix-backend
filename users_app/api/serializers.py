@@ -62,7 +62,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         )
         user.set_password(validated_data['password'])
         user.save()
-        print('USER CREATED NOW', user.is_active)
         return user
 
 
