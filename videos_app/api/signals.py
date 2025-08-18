@@ -24,7 +24,6 @@ def video_post_save(sender, instance, created, **kwargs):
     - Cleanup of the original file once it is no longer needed.
     """
     if created:
-        print('Created!')
         queue = django_rq.get_queue('default', autocommit=True)
         video_path = instance.video_file.path
         output_dir = os.path.dirname(video_path)

@@ -30,17 +30,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         """
         Validates the registration data.
-        Checks for unallowed fields.
         Checks for password confirmation.
         Checks for existing email.
         """
-        allowed_fields = {"email", "password", "confirmed_password"}
-        sent_fields = set(self.initial_data.keys())
-        extra_fields = sent_fields - allowed_fields
-        if extra_fields:
-            raise serializers.ValidationError({
-                field: "This field is not allowed." for field in extra_fields
-            })
 
         if attrs['password'] != attrs['confirmed_password']:
             raise serializers.ValidationError("Passwords don't match")
