@@ -12,19 +12,12 @@ def video_file_path(instance, filename):
 
 
 class Video(models.Model):
-    CATEGORY_CHOICES = [
-        ('horror', 'Horror'),
-        ('action', 'Action'),
-        ('drama', 'Drama'),
-        ('animals', 'Animals'),
-        ('documentary', 'Documentary')
-    ]
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     title = models.CharField(max_length=255)
     description = models.TextField()
     thumbnail_url = models.ImageField(upload_to='thumbnails/')
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    category = models.CharField(max_length=50)
     video_file = models.FileField(
         upload_to=video_file_path, blank=True, null=True)
 
