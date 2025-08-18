@@ -41,3 +41,30 @@ class HLSPlaylistView(generics.RetrieveAPIView):
             raise Http404("Playlist not found")
 
         return FileResponse(open(playlist_path, 'rb'), content_type='application/vnd.apple.mpegurl')
+
+
+class HLSSegmentView(generics.RetrieveAPIView):
+    """
+    View to retrieve a specific HLS segment for a video.
+    """
+    queryset = Video.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "movie_id"
+    permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request, *args, **kwargs):
+        video = self.get_object()
+        resolution = kwargs.get("resolution")
+        segment = kwargs.get("segment")
+        segment_path = os.path.join(
+            settings.MEDIA_ROOT,
+            'videos',
+            str(video.uuid),
+            resolution,
+            segment
+        )
+
+        if not os.path.exists(segment_path):
+            raise Http404("Segment not found")
+
+        return FileResponse(open(segment_path, 'rb'), content_type='video/MP2T')
