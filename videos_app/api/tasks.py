@@ -10,8 +10,8 @@ def convert_video_to_hls(source, resolution, output_dir):
     res_dir = os.path.join(output_dir, f"{resolution}p")  # add 'p' to folder
     os.makedirs(res_dir, exist_ok=True)
 
-    playlist_path = os.path.join(res_dir, f"{resolution}p.m3u8")
-    segment_pattern = os.path.join(res_dir, f"{resolution}p_%03d.ts")
+    playlist_path = os.path.join(res_dir, "index.m3u8")
+    segment_pattern = os.path.join(res_dir, "%03d.ts")
 
     subprocess.run([
         "ffmpeg", "-i", source,
@@ -29,17 +29,17 @@ def convert_video_to_hls(source, resolution, output_dir):
 
 def generate_master_playlist(output_dir):
     """
-    Generate a master.m3u8 file pointing to available resolutions.
+    Generate a master.m3u8 file pointing to fixed resolution variants.
     """
     master_path = os.path.join(output_dir, "master.m3u8")
     with open(master_path, "w") as f:
         f.write("#EXTM3U\n#EXT-X-VERSION:3\n")
         f.write(
-            "#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=854x480\n480p/480p.m3u8\n")
+            "#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=854x480\n480p/index.m3u8\n")
         f.write(
-            "#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720\n720p/720p.m3u8\n")
+            "#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720\n720p/index.m3u8\n")
         f.write(
-            "#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080\n1080p/1080p.m3u8\n")
+            "#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080\n1080p/index.m3u8\n")
     return master_path
 
 
