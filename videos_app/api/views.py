@@ -27,6 +27,9 @@ class HLSPlaylistView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve the HLS playlist for a specific video and resolution.
+        """
         video = self.get_object()
         resolution = kwargs.get("resolution")
         playlist_path = os.path.join(
@@ -53,6 +56,9 @@ class HLSSegmentView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a specific HLS segment for a video.
+        """
         video = self.get_object()
         resolution = kwargs.get("resolution")
         segment = kwargs.get("segment")
