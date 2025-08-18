@@ -19,6 +19,7 @@ class RegistrationView(APIView):
     Handles user registration.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         """Register a new user as inactive."""
@@ -39,6 +40,7 @@ class ActivateAccountView(APIView):
     Handles account activation.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def get(self, request, uidb64, token):
         """
