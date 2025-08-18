@@ -164,6 +164,7 @@ class ResetPasswordView(APIView):
     """
     Handles password reset requests.
     """
+    authentication_classes = []
 
     def post(self, request, *args, **kwargs):
         """
@@ -180,6 +181,7 @@ class PasswordConfirmView(APIView):
     """
     Handles password reset confirmation.
     """
+    authentication_classes = []
 
     def post(self, request, uidb64, token, *args, **kwargs):
         """
