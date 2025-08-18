@@ -24,7 +24,7 @@ class HLSPlaylistView(generics.RetrieveAPIView):
     queryset = Video.objects.all()
     lookup_field = "id"
     lookup_url_kwarg = "movie_id"
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, *args, **kwargs):
         video = self.get_object()
@@ -32,7 +32,7 @@ class HLSPlaylistView(generics.RetrieveAPIView):
         playlist_path = os.path.join(
             settings.MEDIA_ROOT,
             'videos',
-            video.title,
+            str(video.uuid),
             resolution,
             'index.m3u8'
         )
